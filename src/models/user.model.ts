@@ -7,6 +7,13 @@ export interface IUser extends Document<ObjectId> {
   email: string;
   password: string;
   profilePicture?: string;
+  profilePictureMetadata?: {
+    filename: string;
+    originalName: string;
+    size: number;
+    mimeType: string;
+    uploadedAt: Date;
+  };
   createdAt: Date;
   updatedAt: Date;
   comparePassword(candidatePassword: string): Promise<boolean>;
@@ -43,6 +50,13 @@ const UserSchema = new Schema<IUser>(
     profilePicture: {
       type: String,
       default: ''
+    },
+    profilePictureMetadata: {
+      filename: String,
+      originalName: String,
+      size: Number,
+      mimeType: String,
+      uploadedAt: Date
     }
   },
   { timestamps: true }

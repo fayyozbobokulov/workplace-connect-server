@@ -2,6 +2,8 @@ import express, { Request, Response, NextFunction } from 'express';
 import http from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 import connectDB from './config/database';
 import SocketService from './services/socket.service';
 import { requestLogger, errorLogger, securityLogger } from './middlewares/logger.middleware';
@@ -36,6 +38,13 @@ app.use(cors());
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Static file serving for uploaded files
+const filesDir = path.join(process.cwd(), 'files');
+if (!fs.existsSync(filesDir)) {
+  fs.mkdirSync(filesDir, { recursive: true });
+}
+app.use('/files', express.static(filesDir));
 
 // API Routes
 app.use('/api/auth', authRoutes);

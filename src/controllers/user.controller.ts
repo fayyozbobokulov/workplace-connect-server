@@ -3,6 +3,7 @@ import { ZodError } from 'zod';
 import { UserRepository } from '../repositories/user.repository';
 import { IUser } from '../models/user.model';
 import { updateUserProfileSchema, changePasswordSchema, getUsersQuerySchema } from '../validations/user.validation';
+import { deleteFile, generateFileUrl } from '../utils/fileUpload.util';
 import bcrypt from 'bcrypt';
 
 const userRepository = new UserRepository();
@@ -271,5 +272,114 @@ export const deleteCurrentUser = async (req: Request, res: Response, next: NextF
   } catch (error) {
     console.error('Delete user account error:', error);
     res.status(500).json({ message: 'Server error while deleting account' });
+  }
+};
+
+/**
+ * Upload profile picture
+ * @route POST /users/me/profile-picture
+ */
+export const uploadProfilePicture = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Not authorized' });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({ message: 'No file uploaded' });
+      return;
+    }
+
+    const file = req.file;
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const profilePictureUrl = generateFileUrl(file.filename, baseUrl);
+
+    // Delete old profile picture if exists
+    if (req.user.profilePictureMetadata?.filename) {
+      await deleteFile(req.user.profilePictureMetadata.filename);
+    }
+
+    // Prepare profile picture metadata
+    const profilePictureMetadata = {
+      filename: file.filename,
+      originalName: file.originalname,
+      size: file.size,
+      mimeType: file.mimetype,
+      uploadedAt: new Date()
+    };
+
+    // Update user with new profile picture
+    const updatedUser = await userRepository.updateProfile(req.user._id, {
+      profilePicture: profilePictureUrl,
+      profilePictureMetadata
+    }) as IUser;
+
+    if (!updatedUser) {
+      // Clean up uploaded file if user update fails
+      await deleteFile(file.filename);
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    res.json({
+      message: 'Profile picture uploaded successfully',
+      profilePicture: profilePictureUrl,
+      metadata: {
+        filename: file.filename,
+        originalName: file.originalname,
+        size: file.size,
+        mimeType: file.mimetype,
+        uploadedAt: profilePictureMetadata.uploadedAt
+      }
+    });
+  } catch (error) {
+    // Clean up uploaded file if there's an error
+    if (req.file) {
+      await deleteFile(req.file.filename);
+    }
+    
+    console.error('Upload profile picture error:', error);
+    res.status(500).json({ message: 'Server error while uploading profile picture' });
+  }
+};
+
+/**
+ * Delete profile picture
+ * @route DELETE /users/me/profile-picture
+ */
+export const deleteProfilePicture = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Not authorized' });
+      return;
+    }
+
+    if (!req.user.profilePictureMetadata?.filename) {
+      res.status(404).json({ message: 'No profile picture found' });
+      return;
+    }
+
+    // Delete the file from storage
+    const fileDeleted = await deleteFile(req.user.profilePictureMetadata.filename);
+    
+    // Update user to remove profile picture data
+    const updatedUser = await userRepository.updateProfile(req.user._id, {
+      profilePicture: '',
+      profilePictureMetadata: undefined
+    }) as IUser;
+
+    if (!updatedUser) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    res.json({
+      message: 'Profile picture deleted successfully',
+      fileDeleted
+    });
+  } catch (error) {
+    console.error('Delete profile picture error:', error);
+    res.status(500).json({ message: 'Server error while deleting profile picture' });
   }
 };

@@ -60,3 +60,5 @@ debug/
 
 # MongoDB data directory
 mongodb_data/
+
+files

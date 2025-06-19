@@ -5,9 +5,12 @@ import {
   getUsers, 
   updateCurrentUser, 
   changePassword, 
-  deleteCurrentUser 
+  deleteCurrentUser,
+  uploadProfilePicture,
+  deleteProfilePicture
 } from '../controllers/user.controller';
 import { protect } from '../middlewares/auth.middleware';
+import { uploadProfilePicture as uploadMiddleware } from '../utils/fileUpload.util';
 
 const router = express.Router();
 
@@ -54,6 +57,22 @@ router.get('/routes', (req: Request, res: Response) => {
       method: 'DELETE',
       path: '/api/users/me',
       description: 'Delete current user account',
+      access: 'Private (Bearer Token Required)',
+      parameters: 'None (Authorization header required)',
+      response: 'Success message'
+    },
+    {
+      method: 'POST',
+      path: '/api/users/me/profile-picture',
+      description: 'Upload profile picture',
+      access: 'Private (Bearer Token Required)',
+      parameters: 'profilePicture (multipart/form-data file)',
+      response: 'Profile picture URL and metadata'
+    },
+    {
+      method: 'DELETE',
+      path: '/api/users/me/profile-picture',
+      description: 'Delete profile picture',
       access: 'Private (Bearer Token Required)',
       parameters: 'None (Authorization header required)',
       response: 'Success message'
@@ -120,6 +139,15 @@ router.get('/routes', (req: Request, res: Response) => {
             confirmNewPassword: 'newpassword123'
           }
         },
+        uploadProfilePicture: {
+          url: `${req.protocol}://${req.get('host')}/api/users/me/profile-picture`,
+          method: 'POST',
+          headers: {
+            'Authorization': 'Bearer YOUR_JWT_TOKEN_HERE'
+          },
+          body: 'Form data with "profilePicture" file field (multipart/form-data)',
+          note: 'Supported formats: JPEG, PNG, GIF, WebP. Max size: 5MB'
+        },
         getUsers: {
           url: `${req.protocol}://${req.get('host')}/api/users?page=1&limit=10&search=john`,
           method: 'GET',
@@ -163,6 +191,20 @@ router.put('/me/password', changePassword);
  * @access Private
  */
 router.delete('/me', deleteCurrentUser);
+
+/**
+ * @route POST /users/me/profile-picture
+ * @desc Upload profile picture
+ * @access Private
+ */
+router.post('/me/profile-picture', uploadMiddleware.single('profilePicture'), uploadProfilePicture);
+
+/**
+ * @route DELETE /users/me/profile-picture
+ * @desc Delete profile picture
+ * @access Private
+ */
+router.delete('/me/profile-picture', deleteProfilePicture);
 
 /**
  * @route GET /users
