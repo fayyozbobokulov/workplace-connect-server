@@ -3,8 +3,15 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Database configuration
+const DB_NAME = process.env.DB_NAME || 'workplace-connect';
+const DB_HOST = process.env.DB_HOST || 'localhost';
+const DB_PORT = process.env.DB_PORT || '27017';
+const DB_USER = process.env.DB_USER || 'admin';
+const DB_PASSWORD = process.env.DB_PASSWORD || 'password';
+
 // Get MongoDB connection URI from environment variables or use default with Docker credentials
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://admin:password@localhost:27017/workplace-connect?authSource=admin';
+const MONGODB_URI = process.env.MONGODB_URI || `mongodb://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?authSource=admin`;
 
 // Configure mongoose options for optimal usage with repositories
 mongoose.set('strictQuery', true); // Ensure strict schema validation
