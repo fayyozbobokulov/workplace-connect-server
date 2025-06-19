@@ -13,13 +13,10 @@ import { protect } from '../middlewares/auth.middleware';
 
 const router = express.Router();
 
-// Apply authentication middleware to all routes
-router.use(protect);
-
 /**
  * @route GET /notifications/routes
  * @desc Get API documentation for notification routes
- * @access Private
+ * @access Public
  */
 router.get('/routes', (req: Request, res: Response) => {
   const routes = [
@@ -174,55 +171,55 @@ router.get('/routes', (req: Request, res: Response) => {
  * @desc Get notifications with pagination and filtering
  * @access Private
  */
-router.get('/', getNotifications);
+router.get('/', protect, getNotifications);
 
 /**
  * @route GET /notifications/stats
  * @desc Get notification statistics
  * @access Private
  */
-router.get('/stats', getNotificationStats);
+router.get('/stats', protect, getNotificationStats);
 
 /**
  * @route GET /notifications/unread-count
  * @desc Get unread notifications count
  * @access Private
  */
-router.get('/unread-count', getUnreadCount);
+router.get('/unread-count', protect, getUnreadCount);
 
 /**
  * @route PUT /notifications/read
  * @desc Mark specific notifications as read
  * @access Private
  */
-router.put('/read', markAsRead);
+router.put('/read', protect, markAsRead);
 
 /**
  * @route PUT /notifications/read-all
  * @desc Mark all notifications as read
  * @access Private
  */
-router.put('/read-all', markAllAsRead);
+router.put('/read-all', protect, markAllAsRead);
 
 /**
  * @route DELETE /notifications
  * @desc Delete notifications
  * @access Private
  */
-router.delete('/', deleteNotifications);
+router.delete('/', protect, deleteNotifications);
 
 /**
  * @route GET /notifications/:id
  * @desc Get specific notification by ID
  * @access Private
  */
-router.get('/:id', getNotificationById);
+router.get('/:id', protect, getNotificationById);
 
 /**
  * @route POST /notifications
  * @desc Create a notification (admin/system use)
  * @access Private
  */
-router.post('/', createNotification);
+router.post('/', protect, createNotification);
 
 export default router;
