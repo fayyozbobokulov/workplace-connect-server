@@ -50,6 +50,46 @@ router.get('/routes', (req: Request, res: Response) => {
       access: 'Public',
       parameters: 'None',
       response: 'Server status and uptime'
+    },
+    {
+      method: 'GET',
+      path: '/api/users/routes',
+      description: 'Get all available user management routes',
+      access: 'Public',
+      parameters: 'None',
+      response: 'List of all available user routes'
+    },
+    {
+      method: 'GET',
+      path: '/api/users/me',
+      description: 'Get current user profile (detailed)',
+      access: 'Private (Bearer Token Required)',
+      parameters: 'None (Authorization header required)',
+      response: 'Current user profile data'
+    },
+    {
+      method: 'PUT',
+      path: '/api/users/me',
+      description: 'Update current user profile',
+      access: 'Private (Bearer Token Required)',
+      parameters: 'firstName?, lastName?, email?, profilePicture?',
+      response: 'Updated user profile data'
+    },
+    {
+      method: 'PUT',
+      path: '/api/users/me/password',
+      description: 'Change user password',
+      access: 'Private (Bearer Token Required)',
+      parameters: 'currentPassword, newPassword, confirmNewPassword',
+      response: 'Success message'
+    },
+    {
+      method: 'GET',
+      path: '/api/users',
+      description: 'Get all users with pagination',
+      access: 'Private (Bearer Token Required)',
+      parameters: 'page?, limit?, search? (query parameters)',
+      response: 'Paginated list of users'
     }
   ];
 

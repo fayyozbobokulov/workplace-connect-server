@@ -9,6 +9,7 @@ import { requestLogger, errorLogger, securityLogger } from './middlewares/logger
 
 // Routes
 import authRoutes from './routes/auth.routes';
+import userRoutes from './routes/user.routes';
 // import groupRoutes from './routes/group.routes';
 // import messageRoutes from './routes/message.routes';
 
@@ -38,6 +39,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // API Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
 // app.use('/api/groups', groupRoutes);
 // app.use('/api/messages', messageRoutes);
 
