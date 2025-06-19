@@ -7,7 +7,7 @@ import SocketService from './services/socket.service';
 // import errorHandler from './middlewares/error.middleware';
 
 // Routes
-// import authRoutes from './routes/auth.routes';
+import authRoutes from './routes/auth.routes';
 // import groupRoutes from './routes/group.routes';
 // import messageRoutes from './routes/message.routes';
 
@@ -30,7 +30,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // API Routes
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 // app.use('/api/groups', groupRoutes);
 // app.use('/api/messages', messageRoutes);
 

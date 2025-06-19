@@ -15,7 +15,7 @@ interface JwtPayload {
   id: string;
 }
 
-const protect = async (req: Request, res: Response, next: NextFunction) => {
+const protect = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   let token;
 
   // Check if token exists in headers
@@ -37,15 +37,18 @@ const protect = async (req: Request, res: Response, next: NextFunction) => {
       req.user = await User.findById(decoded.id).select('-password');
 
       // If we got here, authentication was successful
-      return next();
+      next();
+      return;
     } catch (error) {
       console.error('Authentication error:', error);
-      return res.status(401).json({ message: 'Not authorized, token failed' });
+      res.status(401).json({ message: 'Not authorized, token failed' });
+      return;
     }
   }
 
   // No token found
-  return res.status(401).json({ message: 'Not authorized, no token' });
+  res.status(401).json({ message: 'Not authorized, no token' });
+  return;
 };
 
 export { protect };

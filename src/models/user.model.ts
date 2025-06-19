@@ -1,8 +1,9 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, ObjectId, Schema } from 'mongoose';
 import bcrypt from 'bcrypt';
 
-export interface IUser extends Document {
-  username: string;
+export interface IUser extends Document<ObjectId> {
+  firstName: string;
+  lastName: string;
   email: string;
   password: string;
   profilePicture?: string;
@@ -13,13 +14,19 @@ export interface IUser extends Document {
 
 const UserSchema = new Schema<IUser>(
   {
-    username: {
+    firstName: {
       type: String,
       required: true,
-      unique: true,
       trim: true,
-      minlength: 3,
-      maxlength: 30
+      minlength: 2,
+      maxlength: 50
+    },
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 2,
+      maxlength: 50
     },
     email: {
       type: String,

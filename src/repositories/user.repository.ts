@@ -9,8 +9,6 @@ import { BaseRepository, IBaseRepository } from './base.repository';
 export interface IUserRepository extends IBaseRepository<IUser> {
   // User-specific methods
   findByEmail(email: string): Promise<IUser | null>;
-  findByUsername(username: string): Promise<IUser | null>;
-  findByEmailOrUsername(emailOrUsername: string): Promise<IUser | null>;
   updateProfile(userId: string | Types.ObjectId, profileData: Partial<IUser>): Promise<IUser | null>;
 }
 
@@ -30,29 +28,6 @@ export class UserRepository extends BaseRepository<IUser> implements IUserReposi
    */
   async findByEmail(email: string): Promise<IUser | null> {
     return this.findOne({ email: email.toLowerCase() });
-  }
-
-  /**
-   * Find a user by username
-   * @param username - Username
-   * @returns Promise resolving to user or null if not found
-   */
-  async findByUsername(username: string): Promise<IUser | null> {
-    return this.findOne({ username });
-  }
-
-  /**
-   * Find a user by email or username
-   * @param emailOrUsername - Email or username
-   * @returns Promise resolving to user or null if not found
-   */
-  async findByEmailOrUsername(emailOrUsername: string): Promise<IUser | null> {
-    return this.findOne({
-      $or: [
-        { email: emailOrUsername.toLowerCase() },
-        { username: emailOrUsername }
-      ]
-    });
   }
 
   /**
