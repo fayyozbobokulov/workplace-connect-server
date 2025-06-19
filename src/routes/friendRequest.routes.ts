@@ -13,14 +13,14 @@ const router = Router();
 
 /**
  * @route   POST /api/friend-requests
- * @desc    Send a friend request
+ * @desc    Send friend requests to multiple users by email
  * @access  Private
- * @body    { recipientId: string }
+ * @body    { emails: string[] }
  * @example POST /api/friend-requests
  *          Content-Type: application/json
  *          Authorization: Bearer <token>
  *          {
- *            "recipientId": "64a1b2c3d4e5f6789012345a"
+ *            "emails": ["user1@example.com", "user2@example.com", "user3@example.com"]
  *          }
  */
 router.post('/', protect, sendFriendRequest);
@@ -50,14 +50,14 @@ router.get('/routes', (req, res) => {
     description: 'Complete API for managing friend requests',
     endpoints: {
       'POST /api/friend-requests': {
-        description: 'Send a friend request',
+        description: 'Send friend requests to multiple users by email',
         auth: 'Required',
-        body: { recipientId: 'string (ObjectId)' },
+        body: { emails: 'string[]' },
         responses: {
-          201: 'Friend request sent successfully',
-          400: 'Validation error or invalid recipient',
-          409: 'Friend request already exists',
-          404: 'Recipient not found'
+          201: 'All friend requests sent successfully',
+          207: 'Partial success - some requests sent, some failed',
+          400: 'Validation error or all requests failed',
+          401: 'Authentication required'
         }
       },
       'GET /api/friend-requests': {
@@ -116,7 +116,7 @@ router.get('/routes', (req, res) => {
         method: 'POST',
         url: '/api/friend-requests',
         headers: { 'Authorization': 'Bearer <token>' },
-        body: { recipientId: '64a1b2c3d4e5f6789012345a' }
+        body: { emails: ["user1@example.com", "user2@example.com", "user3@example.com"] }
       },
       getFriendRequests: {
         method: 'GET',

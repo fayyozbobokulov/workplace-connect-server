@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-// Send friend request validation
+// Send friend request validation - now accepts array of emails
 export const sendFriendRequestSchema = z.object({
-  recipientId: z.string().min(1, 'Recipient ID is required')
+  emails: z.array(z.string().email('Invalid email format')).min(1, 'At least one email is required').max(10, 'Maximum 10 emails allowed')
 });
 
 // Friend request ID parameter validation

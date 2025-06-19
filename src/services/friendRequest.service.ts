@@ -42,8 +42,8 @@ export class FriendRequestService {
     // Create notification for recipient
     await this.notificationRepository.createFriendRequestNotification(
       senderId,
-      recipientId,
-      friendRequest._id
+      new mongoose.Types.ObjectId(recipientId.toString()),
+      new mongoose.Types.ObjectId(friendRequest._id.toString())
     );
 
     return friendRequest;
@@ -161,5 +161,72 @@ export class FriendRequestService {
     return await FriendRequest.findById(friendRequestId)
       .populate('senderDetails')
       .populate('recipientDetails');
+  }
+
+  /**
+   * Send friend requests to multiple users by email
+   */
+  async sendFriendRequestsByEmail(senderId: mongoose.Types.ObjectId, emails: string[]): Promise<{
+    successful: Array<{ email: string; friendRequest: IFriendRequest }>;
+    failed: Array<{ email: string; reason: string }>;
+  }> {
+    const successful: Array<{ email: string; friendRequest: IFriendRequest }> = [];
+    const failed: Array<{ email: string; reason: string }> = [];
+
+    // Get sender's email to prevent self-requests
+    const sender = await User.findById(senderId);
+    if (!sender) {
+      throw new Error('Sender not found');
+    }
+
+    for (const email of emails) {
+      try {
+        // Skip if trying to send to self
+        if (email === sender.email) {
+          failed.push({ email, reason: 'Cannot send friend request to yourself' });
+          continue;
+        }
+
+        // Find recipient by email
+        const recipient = await User.findOne({ email });
+        if (!recipient) {
+          failed.push({ email, reason: 'User not found' });
+          continue;
+        }
+
+        // Check if friend request already exists
+        const existingRequest = await FriendRequest.findOne({
+          $or: [
+            { sender: senderId, recipient: recipient._id },
+            { sender: recipient._id, recipient: senderId }
+          ]
+        });
+
+        if (existingRequest) {
+          failed.push({ email, reason: 'Friend request already exists' });
+          continue;
+        }
+
+        // Create friend request
+        const friendRequest = await FriendRequest.create({
+          sender: senderId,
+          recipient: recipient._id,
+          status: 'pending'
+        });
+
+        // Create notification for recipient
+        await this.notificationRepository.createFriendRequestNotification(
+          senderId,
+          new mongoose.Types.ObjectId(recipient._id.toString()),
+          new mongoose.Types.ObjectId(friendRequest._id.toString())
+        );
+
+        successful.push({ email, friendRequest });
+      } catch (error) {
+        failed.push({ email, reason: error instanceof Error ? error.message : 'Unknown error' });
+      }
+    }
+
+    return { successful, failed };
   }
 }

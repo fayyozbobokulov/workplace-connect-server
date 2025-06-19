@@ -11,34 +11,44 @@ import mongoose from 'mongoose';
 const friendRequestService = new FriendRequestService();
 
 /**
- * Send a friend request
+ * Send friend requests to multiple users by email
  * POST /api/friend-requests
  */
 export const sendFriendRequest = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const validatedData = sendFriendRequestSchema.parse(req.body);
+    const { emails } = sendFriendRequestSchema.parse(req.body);
+    const senderId = new mongoose.Types.ObjectId(req.user._id);
 
-    // Validate recipient ID format
-    if (!mongoose.Types.ObjectId.isValid(validatedData.recipientId)) {
-      res.status(400).json({ message: 'Invalid recipient ID format' });
-      return;
+    const result = await friendRequestService.sendFriendRequestsByEmail(senderId, emails);
+
+    // Determine response status based on results
+    let status = 201; // Created
+    if (result.successful.length === 0) {
+      status = 400; // Bad Request - all failed
+    } else if (result.failed.length > 0) {
+      status = 207; // Multi-Status - partial success
     }
 
-    // Check if trying to send friend request to self
-    if (req.user._id.toString() === validatedData.recipientId) {
-      res.status(400).json({ message: 'Cannot send friend request to yourself' });
-      return;
-    }
-
-    const friendRequest = await friendRequestService.sendFriendRequest(
-      req.user._id,
-      new mongoose.Types.ObjectId(validatedData.recipientId)
-    );
-
-    res.status(201).json({
-      success: true,
-      message: 'Friend request sent successfully',
-      data: { friendRequest }
+    res.status(status).json({
+      success: result.successful.length > 0,
+      message: result.successful.length === emails.length 
+        ? 'All friend requests sent successfully'
+        : result.successful.length === 0
+        ? 'No friend requests were sent'
+        : `${result.successful.length} of ${emails.length} friend requests sent successfully`,
+      data: {
+        successful: result.successful.map(item => ({
+          email: item.email,
+          friendRequestId: item.friendRequest._id,
+          recipient: item.friendRequest.recipient
+        })),
+        failed: result.failed,
+        summary: {
+          total: emails.length,
+          successful: result.successful.length,
+          failed: result.failed.length
+        }
+      }
     });
   } catch (error) {
     if (error instanceof ZodError) {
@@ -47,17 +57,6 @@ export const sendFriendRequest = async (req: Request, res: Response, next: NextF
         errors: error.errors
       });
       return;
-    }
-
-    if (error instanceof Error) {
-      if (error.message === 'Friend request already exists') {
-        res.status(409).json({ message: error.message });
-        return;
-      }
-      if (error.message === 'Recipient not found') {
-        res.status(404).json({ message: error.message });
-        return;
-      }
     }
 
     next(error);
