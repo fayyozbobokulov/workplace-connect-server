@@ -15,7 +15,7 @@ import userRoutes from './routes/user.routes';
 import fileRoutes from './routes/file.routes';
 import notificationRoutes from './routes/notification.routes';
 import friendRequestRoutes from './routes/friendRequest.routes';
-// import groupRoutes from './routes/group.routes';
+import groupRoutes from './routes/group.routes';
 // import messageRoutes from './routes/message.routes';
 
 // Load environment variables
@@ -55,7 +55,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/friend-requests', friendRequestRoutes);
 app.use('/files', fileRoutes);
-// app.use('/api/groups', groupRoutes);
+app.use('/api/groups', groupRoutes);
 // app.use('/api/messages', messageRoutes);
 
 // Health check route
