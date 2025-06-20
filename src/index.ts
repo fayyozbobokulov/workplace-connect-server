@@ -16,7 +16,7 @@ import fileRoutes from './routes/file.routes';
 import notificationRoutes from './routes/notification.routes';
 import friendRequestRoutes from './routes/friendRequest.routes';
 import groupRoutes from './routes/group.routes';
-// import messageRoutes from './routes/message.routes';
+import messageRoutes from './routes/message.routes';
 
 // Load environment variables
 dotenv.config();
@@ -56,7 +56,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/friend-requests', friendRequestRoutes);
 app.use('/files', fileRoutes);
 app.use('/api/groups', groupRoutes);
-// app.use('/api/messages', messageRoutes);
+app.use('/api/messages', messageRoutes);
 
 // Health check route
 app.get('/health', (req: Request, res: Response) => {

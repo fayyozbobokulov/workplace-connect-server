@@ -1,8 +1,8 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import mongoose, { Document, ObjectId, Schema } from 'mongoose';
 import { IUser } from './user.model';
 import { IGroup } from './group.model';
 
-export interface IMessage extends Document {
+export interface IMessage extends Document<ObjectId> {
   content: string;
   sender: mongoose.Types.ObjectId | IUser;
   receiver?: mongoose.Types.ObjectId | IUser; // For direct messages

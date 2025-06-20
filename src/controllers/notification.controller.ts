@@ -1,7 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import { NotificationRepository } from '../repositories/notification.repository';
-import { INotification } from '../models/notification.model';
 import { 
   getNotificationsQuerySchema, 
   markAsReadSchema, 

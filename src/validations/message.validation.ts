@@ -31,4 +31,41 @@ export const createMessageSchema = z.object({
   path: ['group']
 });
 
+export const markMessagesAsReadSchema = z.object({
+  messageIds: z
+    .array(z.string().refine(isValidObjectId, {
+      message: 'Invalid message ID format'
+    }))
+    .min(1, 'At least one message ID is required')
+    .max(100, 'Cannot mark more than 100 messages at once')
+});
+
+export const messageIdSchema = z.object({
+  messageId: z
+    .string()
+    .refine(isValidObjectId, {
+      message: 'Invalid message ID format'
+    })
+});
+
+export const userIdSchema = z.object({
+  userId: z
+    .string()
+    .refine(isValidObjectId, {
+      message: 'Invalid user ID format'
+    })
+});
+
+export const groupIdSchema = z.object({
+  groupId: z
+    .string()
+    .refine(isValidObjectId, {
+      message: 'Invalid group ID format'
+    })
+});
+
 export type CreateMessageInput = z.infer<typeof createMessageSchema>;
+export type MarkMessagesAsReadInput = z.infer<typeof markMessagesAsReadSchema>;
+export type MessageIdInput = z.infer<typeof messageIdSchema>;
+export type UserIdInput = z.infer<typeof userIdSchema>;
+export type GroupIdInput = z.infer<typeof groupIdSchema>;
