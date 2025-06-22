@@ -7,6 +7,7 @@ import fs from 'fs';
 import connectDB from './config/database';
 import SocketService from './services/socket.service';
 import { requestLogger, errorLogger, securityLogger } from './middlewares/logger.middleware';
+import { setSocketService } from './controllers/message.controller';
 // import errorHandler from './middlewares/error.middleware';
 
 // Routes
@@ -30,6 +31,9 @@ const server = http.createServer(app);
 
 // Initialize Socket.io service
 const socketService = new SocketService(server);
+
+// Inject socket service into message controller
+setSocketService(socketService);
 
 // Logging middleware (should be first)
 app.use(requestLogger);

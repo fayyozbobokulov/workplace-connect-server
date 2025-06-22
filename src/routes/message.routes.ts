@@ -8,7 +8,9 @@ import {
   getUnreadDirectMessageCount,
   getUnreadGroupMessageCount,
   getRecentConversations,
-  deleteMessage
+  deleteMessage,
+  getOnlineUsers,
+  getUserStatus
 } from '../controllers/message.controller';
 
 const router = Router();
@@ -100,6 +102,21 @@ router.get('/routes', (req, res) => {
       }
     },
     {
+      method: 'GET',
+      path: '/api/messages/online-users',
+      description: 'Get online users',
+      authentication: 'Required'
+    },
+    {
+      method: 'GET',
+      path: '/api/messages/user-status/:userId',
+      description: 'Get user status',
+      authentication: 'Required',
+      params: {
+        userId: 'string (required) - User ID'
+      }
+    },
+    {
       method: 'DELETE',
       path: '/api/messages/:messageId',
       description: 'Delete a message (only sender can delete)',
@@ -146,6 +163,12 @@ router.get('/unread/group/:groupId', getUnreadGroupMessageCount);
 
 // Get recent conversations
 router.get('/conversations', getRecentConversations);
+
+// Get online users
+router.get('/online-users', getOnlineUsers);
+
+// Get user status
+router.get('/user-status/:userId', getUserStatus);
 
 // Delete a message
 router.delete('/:messageId', deleteMessage);

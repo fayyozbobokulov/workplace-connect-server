@@ -2,12 +2,21 @@ import { Request, Response, NextFunction } from 'express';
 import { ZodError } from 'zod';
 import mongoose from 'mongoose';
 import { MessageService } from '../services/message.service';
-import { createMessageSchema, CreateMessageInput } from '../validations/message.validation';
+import { createMessageSchema } from '../validations/message.validation';
+import SocketService from '../services/socket.service';
 
 const messageService = new MessageService();
 
+// Socket service instance will be injected
+let socketService: SocketService | null = null;
+
+// Function to set socket service instance
+export const setSocketService = (instance: SocketService) => {
+  socketService = instance;
+};
+
 /**
- * Send a message (direct or group)
+ * Send a message (direct or group) - Enhanced with real-time support
  * POST /api/messages
  */
 export const sendMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -33,6 +42,17 @@ export const sendMessage = async (req: Request, res: Response, next: NextFunctio
       timestamp: message.createdAt.toISOString(),
       isOwn: true // Since the sender is sending the message
     };
+
+    // Emit real-time message if socket service is available
+    if (socketService) {
+      if (receiverId) {
+        // Direct message
+        socketService.emitDirectMessage(senderId.toString(), receiverId.toString(), formattedMessage);
+      } else if (groupId) {
+        // Group message
+        socketService.emitGroupMessage(groupId.toString(), formattedMessage);
+      }
+    }
 
     res.status(201).json({
       success: true,
@@ -190,7 +210,7 @@ export const getGroupMessages = async (req: Request, res: Response, next: NextFu
 };
 
 /**
- * Mark messages as read
+ * Mark messages as read - Enhanced with real-time support
  * PUT /api/messages/read
  */
 export const markMessagesAsRead = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -213,6 +233,16 @@ export const markMessagesAsRead = async (req: Request, res: Response, next: Next
     const objectIds = validIds.map(id => new mongoose.Types.ObjectId(id));
 
     await messageService.markMessagesAsRead(userId, objectIds);
+
+    // Emit real-time read receipt if socket service is available
+    if (socketService) {
+      // You could enhance this to emit read receipts to message senders
+      // For now, we'll just emit to the user who marked messages as read
+      socketService.getIO().to(userId.toString()).emit('messages-marked-read', {
+        messageIds: validIds,
+        readBy: userId.toString()
+      });
+    }
 
     res.json({
       success: true,
@@ -298,24 +328,29 @@ export const getRecentConversations = async (req: Request, res: Response, next: 
     );
 
     // Format conversations for frontend
-    const formattedConversations = conversations.map(conv => ({
-      type: conv.type,
-      participant: conv.participant,
-      group: conv.group,
-      lastMessage: {
-        _id: conv.lastMessage._id.toString(),
-        text: conv.lastMessage.content,
-        sender: {
-          _id: conv.lastMessage.sender._id.toString(),
-          firstName: conv.lastMessage.sender.firstName,
-          lastName: conv.lastMessage.sender.lastName,
-          profilePicture: conv.lastMessage.sender.profilePictureUrl
+    const formattedConversations = conversations.map(conv => {
+      // Type assertion since we know sender is populated from the aggregation
+      const populatedSender = conv.lastMessage.sender as any;
+      
+      return {
+        type: conv.type,
+        participant: conv.participant,
+        group: conv.group,
+        lastMessage: {
+          _id: conv.lastMessage._id.toString(),
+          text: conv.lastMessage.content,
+          sender: {
+            _id: populatedSender._id.toString(),
+            firstName: populatedSender.firstName,
+            lastName: populatedSender.lastName,
+            profilePicture: populatedSender.profilePictureUrl
+          },
+          timestamp: conv.lastMessage.createdAt.toISOString(),
+          isOwn: populatedSender._id.toString() === userId.toString()
         },
-        timestamp: conv.lastMessage.createdAt.toISOString(),
-        isOwn: conv.lastMessage.sender._id.toString() === userId.toString()
-      },
-      unreadCount: conv.unreadCount
-    }));
+        unreadCount: conv.unreadCount
+      };
+    });
 
     res.json({
       success: true,
@@ -331,7 +366,7 @@ export const getRecentConversations = async (req: Request, res: Response, next: 
 };
 
 /**
- * Delete a message
+ * Delete a message - Enhanced with real-time support
  * DELETE /api/messages/:messageId
  */
 export const deleteMessage = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -345,7 +380,40 @@ export const deleteMessage = async (req: Request, res: Response, next: NextFunct
     }
 
     const userId = new mongoose.Types.ObjectId(req.user._id);
+    
+    // Get message details before deletion for real-time notification
+    const messageToDelete = await messageService.getMessageById(new mongoose.Types.ObjectId(messageId));
+    
+    if (!messageToDelete) {
+      res.status(404).json({ message: 'Message not found' });
+      return;
+    }
+
+    // Check if user can delete this message
+    if (messageToDelete.sender._id.toString() !== userId.toString()) {
+      res.status(403).json({ message: 'You can only delete your own messages' });
+      return;
+    }
+
     await messageService.deleteMessage(new mongoose.Types.ObjectId(messageId), userId);
+
+    // Emit real-time message deletion if socket service is available
+    if (socketService) {
+      if (messageToDelete.receiver) {
+        // Direct message deletion
+        socketService.emitMessageDeleted(
+          messageId, 
+          messageToDelete.receiver._id.toString()
+        );
+      } else if (messageToDelete.group) {
+        // Group message deletion
+        socketService.emitMessageDeleted(
+          messageId, 
+          undefined, 
+          messageToDelete.group._id.toString()
+        );
+      }
+    }
 
     res.json({
       success: true,
@@ -363,6 +431,66 @@ export const deleteMessage = async (req: Request, res: Response, next: NextFunct
       }
     }
 
+    next(error);
+  }
+};
+
+/**
+ * Get online users
+ * GET /api/messages/online-users
+ */
+export const getOnlineUsers = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!socketService) {
+      res.status(503).json({ message: 'Real-time service not available' });
+      return;
+    }
+
+    const onlineUsers = socketService.getOnlineUsers();
+    
+    res.json({
+      success: true,
+      message: 'Online users retrieved successfully',
+      data: { 
+        onlineUsers,
+        count: onlineUsers.length 
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Check if user is online
+ * GET /api/messages/user-status/:userId
+ */
+export const getUserStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { userId } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ message: 'Invalid user ID format' });
+      return;
+    }
+
+    if (!socketService) {
+      res.status(503).json({ message: 'Real-time service not available' });
+      return;
+    }
+
+    const isOnline = socketService.isUserOnline(userId);
+    
+    res.json({
+      success: true,
+      message: 'User status retrieved successfully',
+      data: { 
+        userId,
+        isOnline,
+        status: isOnline ? 'online' : 'offline'
+      }
+    });
+  } catch (error) {
     next(error);
   }
 };

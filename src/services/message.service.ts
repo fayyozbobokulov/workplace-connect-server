@@ -378,12 +378,21 @@ export class MessageService {
   }
 
   /**
+   * Get a message by ID
+   */
+  async getMessageById(messageId: mongoose.Types.ObjectId): Promise<any> {
+    const message = await Message.findById(messageId)
+      .populate('sender', 'firstName lastName profilePictureUrl')
+      .populate('receiver', 'firstName lastName profilePictureUrl')
+      .populate('group', 'name');
+
+    return message;
+  }
+
+  /**
    * Delete a message (only sender can delete)
    */
-  async deleteMessage(
-    messageId: mongoose.Types.ObjectId,
-    userId: mongoose.Types.ObjectId
-  ): Promise<void> {
+  async deleteMessage(messageId: mongoose.Types.ObjectId, userId: mongoose.Types.ObjectId): Promise<void> {
     const message = await Message.findById(messageId);
     if (!message) {
       throw new Error('Message not found');
