@@ -1,9 +1,9 @@
-import express, { Request, Response, NextFunction } from 'express';
+import express, { Request, Response } from 'express';
 import http from 'http';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import path from 'path';
 import fs from 'fs';
+import path from 'path';
+import dotenv from 'dotenv';
 import connectDB from './config/database';
 import SocketService from './services/socket.service';
 import { requestLogger, errorLogger, securityLogger } from './middlewares/logger.middleware';
@@ -18,6 +18,7 @@ import notificationRoutes from './routes/notification.routes';
 import friendRequestRoutes from './routes/friendRequest.routes';
 import groupRoutes from './routes/group.routes';
 import messageRoutes from './routes/message.routes';
+import mockRoutes from './routes/mock.routes';
 
 // Load environment variables
 dotenv.config();
@@ -53,6 +54,14 @@ if (!fs.existsSync(filesDir)) {
   console.log(`📁 Created files directory: ${filesDir}`);
 }
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
+// Demo route for mock API
+app.get('/demo', (req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, '../public/mock-demo.html'));
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
@@ -61,6 +70,7 @@ app.use('/api/friend-requests', friendRequestRoutes);
 app.use('/files', fileRoutes);
 app.use('/api/groups', groupRoutes);
 app.use('/api/messages', messageRoutes);
+app.use('/api/mock', mockRoutes);
 
 // Health check route
 app.get('/health', (req: Request, res: Response) => {

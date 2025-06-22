@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock Data API Demo - Workplace Connect</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .endpoint-url {
+            font-family: 'Monaco', 'Menlo', monospace;
+            background: #e9ecef;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+        .user-card, .group-card {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #007bff;
+        }
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+        }
+        .user-info h4, .group-info h4 {
+            margin: 0 0 5px 0;
+            color: #333;
+        }
+        .user-info p, .group-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9em;
+        }
+        .online-status {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-left: 10px;
+        }
+        .online { background-color: #28a745; }
+        .offline { background-color: #dc3545; }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>🚀 Workplace Connect - Mock Data API Demo</h1>
+    
+    <div class="container">
+        <h2>📊 Database Statistics</h2>
+        <div id="stats-container">
+            <div class="loading">Loading statistics...</div>
+        </div>
+        <div class="endpoint">
+            <strong>Endpoint:</strong> <span class="endpoint-url">GET /api/mock/stats</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>👥 Mock Users</h2>
+        <button onclick="loadUsers()">Refresh Users</button>
+        <div id="users-container">
+            <div class="loading">Loading users...</div>
+        </div>
+        <div class="endpoint">
+            <strong>Endpoint:</strong> <span class="endpoint-url">GET /api/mock/users</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>👨‍👩‍👧‍👦 Mock Groups</h2>
+        <button onclick="loadGroups()">Refresh Groups</button>
+        <div id="groups-container">
+            <div class="loading">Loading groups...</div>
+        </div>
+        <div class="endpoint">
+            <strong>Endpoint:</strong> <span class="endpoint-url">GET /api/mock/groups</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>💬 Mock Conversations</h2>
+        <button onclick="loadConversations()">Refresh Conversations</button>
+        <div id="conversations-container">
+            <div class="loading">Loading conversations...</div>
+        </div>
+        <div class="endpoint">
+            <strong>Endpoint:</strong> <span class="endpoint-url">GET /api/mock/conversations</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔗 Available API Endpoints</h2>
+        <div class="endpoint">
+            <strong>Mock Users:</strong> <span class="endpoint-url">GET /api/mock/users</span><br>
+            <small>Returns formatted user data with profile pictures and online status</small>
+        </div>
+        <div class="endpoint">
+            <strong>Mock Groups:</strong> <span class="endpoint-url">GET /api/mock/groups</span><br>
+            <small>Returns groups with member details and creator information</small>
+        </div>
+        <div class="endpoint">
+            <strong>Mock Conversations:</strong> <span class="endpoint-url">GET /api/mock/conversations</span><br>
+            <small>Returns recent conversations (direct and group) with last messages</small>
+        </div>
+        <div class="endpoint">
+            <strong>Database Stats:</strong> <span class="endpoint-url">GET /api/mock/stats</span><br>
+            <small>Returns counts of users, groups, and messages in the database</small>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2>🔐 Test Credentials</h2>
+        <div class="endpoint">
+            <strong>Email:</strong> Any user email from the mock data (e.g., emma.johnson@workplace.com)<br>
+            <strong>Password:</strong> <code>Qwerty@123</code><br>
+            <small>All mock users have the same password for easy testing</small>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api/mock';
+
+        async function fetchData(endpoint) {
+            try {
+                const response = await fetch(`${API_BASE}${endpoint}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                return await response.json();
+            } catch (error) {
+                console.error(`Error fetching ${endpoint}:`, error);
+                throw error;
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const data = await fetchData('/stats');
+                const container = document.getElementById('stats-container');
+                
+                container.innerHTML = `
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-number">${data.data.users}</div>
+                            <div class="stat-label">Users</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.data.groups}</div>
+                            <div class="stat-label">Groups</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number">${data.data.messages}</div>
+                            <div class="stat-label">Messages</div>
+                        </div>
+                    </div>
+                    <p><small>Last updated: ${new Date(data.data.timestamp).toLocaleString()}</small></p>
+                `;
+            } catch (error) {
+                document.getElementById('stats-container').innerHTML = 
+                    `<div class="error">Error loading stats: ${error.message}</div>`;
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const data = await fetchData('/users');
+                const container = document.getElementById('users-container');
+                
+                const usersHtml = data.data.slice(0, 10).map(user => `
+                    <div class="user-card">
+                        <img src="${user.profilePicture}" alt="${user.name}" class="avatar">
+                        <div class="user-info">
+                            <h4>${user.name} <span class="online-status ${user.online ? 'online' : 'offline'}"></span></h4>
+                            <p>${user.email}</p>
+                        </div>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = usersHtml + 
+                    `<p><small>Showing first 10 of ${data.data.length} users</small></p>`;
+            } catch (error) {
+                document.getElementById('users-container').innerHTML = 
+                    `<div class="error">Error loading users: ${error.message}</div>`;
+            }
+        }
+
+        async function loadGroups() {
+            try {
+                const data = await fetchData('/groups');
+                const container = document.getElementById('groups-container');
+                
+                const groupsHtml = data.data.map(group => `
+                    <div class="group-card">
+                        <div style="font-size: 2em; margin-right: 15px;">${group.avatar}</div>
+                        <div class="group-info">
+                            <h4>${group.name}</h4>
+                            <p>${group.description}</p>
+                            <p><strong>${group.memberCount} members</strong> • Created by ${group.creator.name}</p>
+                        </div>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = groupsHtml;
+            } catch (error) {
+                document.getElementById('groups-container').innerHTML = 
+                    `<div class="error">Error loading groups: ${error.message}</div>`;
+            }
+        }
+
+        async function loadConversations() {
+            try {
+                const data = await fetchData('/conversations');
+                const container = document.getElementById('conversations-container');
+                
+                const conversationsHtml = data.data.slice(0, 10).map(conv => `
+                    <div class="user-card">
+                        <img src="${conv.participant.profilePicture}" alt="${conv.participant.name}" class="avatar">
+                        <div class="user-info">
+                            <h4>${conv.participant.name} ${conv.type === 'group' ? '(Group)' : ''}</h4>
+                            <p>${conv.lastMessage}</p>
+                            ${conv.unreadCount > 0 ? `<p><strong>${conv.unreadCount} unread messages</strong></p>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                container.innerHTML = conversationsHtml + 
+                    `<p><small>Showing first 10 of ${data.data.length} conversations</small></p>`;
+            } catch (error) {
+                document.getElementById('conversations-container').innerHTML = 
+                    `<div class="error">Error loading conversations: ${error.message}</div>`;
+            }
+        }
+
+        // Load all data on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStats();
+            loadUsers();
+            loadGroups();
+            loadConversations();
+        });
+    </script>
+</body>
+</html>
