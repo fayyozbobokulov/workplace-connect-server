@@ -283,12 +283,12 @@ export const deleteCurrentUser = async (req: Request, res: Response, next: NextF
 export const uploadProfilePicture = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({ message: 'Not authorized' });
+      res.status(401).json({ message: 'User Not authorized' });
       return;
     }
 
     if (!req.file) {
-      res.status(400).json({ message: 'No file uploaded' });
+      res.status(400).json({ message: 'No profile picture uploaded' });
       return;
     }
 
