@@ -37,11 +37,24 @@ export const sendFriendRequest = async (req: Request, res: Response, next: NextF
         ? 'No friend requests were sent'
         : `${result.successful.length} of ${emails.length} friend requests sent successfully`,
       data: {
-        successful: result.successful.map(item => ({
-          email: item.email,
-          friendRequestId: item.friendRequest._id,
-          recipient: item.friendRequest.recipient
-        })),
+        successful: result.successful.map(item => {
+          if ('type' in item && item.type === 'invitation') {
+            return {
+              email: item.email,
+              type: 'invitation',
+              message: item.message
+            };
+          } else if ('friendRequest' in item) {
+            return {
+              email: item.email,
+              friendRequestId: item.friendRequest._id,
+              recipient: item.friendRequest.recipient
+            };
+          } else {
+            // This should never happen, but TypeScript requires it
+            throw new Error('Invalid item type in successful results');
+          }
+        }),
         failed: result.failed,
         summary: {
           total: emails.length,

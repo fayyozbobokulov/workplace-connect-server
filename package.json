@@ -23,6 +23,7 @@
   "description": "A real-time chat application with group messaging capabilities",
   "dependencies": {
     "@types/multer": "^1.4.13",
+    "@types/nodemailer": "^6.4.17",
     "@types/uuid": "^10.0.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
@@ -31,6 +32,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.14.2",
     "multer": "^2.0.1",
+    "nodemailer": "^7.0.3",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0",
     "zod": "^3.24.4"

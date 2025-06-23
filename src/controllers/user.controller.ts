@@ -91,10 +91,9 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction):
     }
     
     // Get users with pagination
-    const users = await userRepository.find(filter, {
+    const users = await userRepository.find(filter, '-password', {
       skip,
       limit,
-      select: '-password', // Exclude password field
       sort: { createdAt: -1 } // Sort by newest first
     });
     
@@ -102,7 +101,7 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction):
     const totalUsers = await userRepository.count(filter);
     const totalPages = Math.ceil(totalUsers / limit);
     
-    res.json({
+    const response = {
       users,
       pagination: {
         currentPage: page,
@@ -113,7 +112,9 @@ export const getUsers = async (req: Request, res: Response, next: NextFunction):
         limit
       },
       search: search || null
-    });
+    };
+    
+    res.json(response);
   } catch (error) {
     if (error instanceof ZodError) {
       res.status(400).json({ 

@@ -2,6 +2,7 @@ import mongoose, { ObjectId } from 'mongoose';
 import FriendRequest, { IFriendRequest } from '../models/friendRequest.model';
 import User from '../models/user.model';
 import { NotificationRepository } from '../repositories/notification.repository';
+import { emailService } from './email.service';
 
 export class FriendRequestService {
   private notificationRepository: NotificationRepository;
@@ -18,6 +19,12 @@ export class FriendRequestService {
     const recipient = await User.findById(recipientId);
     if (!recipient) {
       throw new Error('Recipient not found');
+    }
+
+    // Get sender details for email
+    const sender = await User.findById(senderId);
+    if (!sender) {
+      throw new Error('Sender not found');
     }
 
     // Check if friend request already exists
@@ -45,6 +52,14 @@ export class FriendRequestService {
       new mongoose.Types.ObjectId(recipientId.toString()),
       new mongoose.Types.ObjectId(friendRequest._id.toString())
     );
+
+    // Send email notification to recipient
+    await emailService.sendFriendRequestNotification({
+      senderName: `${sender.firstName} ${sender.lastName}`,
+      senderEmail: sender.email,
+      recipientName: `${recipient.firstName} ${recipient.lastName}`,
+      recipientEmail: recipient.email
+    });
 
     return friendRequest;
   }
@@ -167,10 +182,10 @@ export class FriendRequestService {
    * Send friend requests to multiple users by email
    */
   async sendFriendRequestsByEmail(senderId: mongoose.Types.ObjectId, emails: string[]): Promise<{
-    successful: Array<{ email: string; friendRequest: IFriendRequest }>;
+    successful: Array<{ email: string; friendRequest: IFriendRequest } | { email: string; type: 'invitation'; message: string }>;
     failed: Array<{ email: string; reason: string }>;
   }> {
-    const successful: Array<{ email: string; friendRequest: IFriendRequest }> = [];
+    const successful: Array<{ email: string; friendRequest: IFriendRequest } | { email: string; type: 'invitation'; message: string }> = [];
     const failed: Array<{ email: string; reason: string }> = [];
 
     // Get sender's email to prevent self-requests
@@ -190,7 +205,18 @@ export class FriendRequestService {
         // Find recipient by email
         const recipient = await User.findOne({ email });
         if (!recipient) {
-          failed.push({ email, reason: 'User not found' });
+          // Send invitation email to non-existing users
+          await emailService.sendInvitationEmail({
+            senderName: `${sender.firstName} ${sender.lastName}`,
+            senderEmail: sender.email,
+            recipientEmail: email
+          });
+          
+          successful.push({ 
+            email, 
+            type: 'invitation',
+            message: 'Invitation email sent to non-registered user'
+          });
           continue;
         }
 
@@ -220,6 +246,14 @@ export class FriendRequestService {
           new mongoose.Types.ObjectId(recipient._id.toString()),
           new mongoose.Types.ObjectId(friendRequest._id.toString())
         );
+
+        // Send email notification to recipient
+        await emailService.sendFriendRequestNotification({
+          senderName: `${sender.firstName} ${sender.lastName}`,
+          senderEmail: sender.email,
+          recipientName: `${recipient.firstName} ${recipient.lastName}`,
+          recipientEmail: recipient.email
+        });
 
         successful.push({ email, friendRequest });
       } catch (error) {

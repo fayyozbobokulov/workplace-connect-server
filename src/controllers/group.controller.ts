@@ -69,9 +69,9 @@ export const createGroup = async (req: Request, res: Response, next: NextFunctio
  */
 export const getUserGroups = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
-    const userId = new mongoose.Types.ObjectId(req.user._id);
+    const userId = new mongoose.Types.ObjectId(req.user?._id);
     const groups = await groupService.getUserGroups(userId);
-
+    
     res.json({
       success: true,
       message: 'Groups retrieved successfully',
