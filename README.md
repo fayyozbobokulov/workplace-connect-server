@@ -1,6 +1,10 @@
 # Workplace Connect - Real-time Chat Application
 
-A scalable and maintainable real-time chat application built with Express, MongoDB, TypeScript, and Socket.io.
+Workplace connect is a scalable and maintainable real-time chat application built with Express, MongoDB, TypeScript, and Socket.io.
+
+This workplace-connect-server is a backend repository for this application.
+
+You can find the frontend repository for this application here: https://github.com/fayyozbobokulov/workplace-connect-frontend
 
 ## Features
 
